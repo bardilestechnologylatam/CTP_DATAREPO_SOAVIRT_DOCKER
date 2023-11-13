@@ -1,0 +1,59 @@
+version: '3.8'
+services:
+  soavirt:
+    image: soavirt_web_lss
+    container_name: soavirt-server
+    ports:
+      - 9080:9080
+      - 9443:9433 #HTTPS
+      - 9617:9617
+      - 9618:9618
+    environment:
+      - ACCEPT_EULA=true
+      - HTTP_PORT=9080
+      - EVENTS_PORT=9617
+      - STATISTICS_PORT=9618
+    volumes:
+      - ./SOAVIRT_VOL:/usr/local/parasoft/soavirt/webapps/ROOT/workspace
+    networks:
+      - network-bridge
+  ctp:
+    image: parasoft/ctp:latest
+    container_name: ctp
+    ports:
+      - "8080:8080"
+    environment:
+      - LICENSE_SERVER_URL=http://18.188.214.8:8080
+      - LICENSE_SERVER_AUTH_ENABLED=false
+      - LICENSE_SERVER_USERNAME=admin
+      - LICENSE_SERVER_PASSWORD=admin
+      - USAGE_DATA=true
+    volumes:
+      - ./CTP_VOL:/usr/local/parasoft/ctp/hsqldb
+    restart: always
+    networks:
+      - network-bridge
+
+  datarepo:
+    image: parasoft/datarepo
+    container_name: datarepo
+    ports:
+      - "2424:2424"
+    environment:
+      - USERNAME=admin
+      - PASSWORD=admin
+      - CTP_URL=http://localhost:8080
+      - CTP_USERNAME=admin
+      - CTP_PASSWORD=admin
+      - ALIAS=myServer
+    volumes:
+      - ./DATA_REPO:/usr/local/parasoft/datarepo/repositories
+    restart: always
+    depends_on:
+      - ctp  # Asegura que el servicio "ctp" esté disponible antes de iniciar "datarepo"
+
+networks:
+  network-bridge:
+    driver: bridge
+
+    
